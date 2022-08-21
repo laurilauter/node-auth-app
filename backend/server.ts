@@ -1,8 +1,9 @@
 import express from "express";
 import mongoose from "mongoose";
 import "dotenv/config";
+import userRouter from "./routes/userRouter";
 const path = require("path");
-const userRoutes = require("./routes/userRoutes");
+//const userRoutes = require("./routes/userRoutes");
 const port = process.env.PORT;
 //const uri = process.env.MONGO_URI; //for live DB
 //const localUri = process.env.MONGO_LOCAL_URI; //for local DB
@@ -21,7 +22,7 @@ export const getConnection = mongoose.connect(`${uri}`).then(() => {
   //set up a server
   const app = express();
   app.use(express.json());
-  app.use("/api", userRoutes);
+  app.use("/api", userRouter);
 
   //serving public files
   //app.use("/", express.static(path.join(__dirname, "../public")));

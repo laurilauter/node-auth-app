@@ -7,8 +7,9 @@ exports.getConnection = void 0;
 const express_1 = __importDefault(require("express"));
 const mongoose_1 = __importDefault(require("mongoose"));
 require("dotenv/config");
+const userRoutes_1 = __importDefault(require("./routes/userRoutes"));
 const path = require("path");
-const userRoutes = require("./routes/userRoutes");
+//const userRoutes = require("./routes/userRoutes");
 const port = process.env.PORT;
 //const uri = process.env.MONGO_URI; //for live DB
 //const localUri = process.env.MONGO_LOCAL_URI; //for local DB
@@ -26,7 +27,7 @@ exports.getConnection = mongoose_1.default.connect(`${uri}`).then(() => {
     //set up a server
     const app = (0, express_1.default)();
     app.use(express_1.default.json());
-    app.use("/api", userRoutes);
+    app.use("/api", userRoutes_1.default);
     //serving public files
     //app.use("/", express.static(path.join(__dirname, "../public")));
     //serv static FE
