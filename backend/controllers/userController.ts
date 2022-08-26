@@ -56,18 +56,16 @@ export async function registerUser(req: Request, res: Response) {
 
     // Step 3 - Generate a verification token with the user's ID
     const verificationToken = createUser.generateVerificationToken();
-    console.log("verificationToken ", verificationToken);
-    //const verificationToken = "test";
     //send validation email
     const url = `http://localhost:${process.env.PORT}/api/verify/${verificationToken}`;
-    console.log("url ", url);
-    // transporter.sendMail({
-    //   from: '"Lautrade system" <system@lautrade.com>', // sender address
-    //   to: req.body.email,
-    //   subject: "Verify Account testing 2",
-    //   text: "Verify Account testing email 2.", // plain text body
-    //   html: `Click <a href = '${url}'>here</a> to confirm your email 2.`,
-    // });
+    transporter.sendMail({
+      from: '"Lautrade system" <system@lautrade.com>', // sender address
+      to: req.body.email,
+      subject: "Node Ap - Verify Account",
+      text: "Verify Account", // plain text body
+      html: `Node Ap - Verify Account
+      Click <a href = '${url}'>here</a> to confirm your email.`,
+    });
 
     res.status(200).send(createUser);
   } catch (error) {
