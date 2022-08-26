@@ -1,10 +1,22 @@
 import { Request, Response } from "express";
-import { User } from "../models/userModel";
+import User from "../models/userModel";
 import "dotenv/config";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { body, validationResult } from "express-validator";
 const secret = process.env.SECRET;
+const emailSecretKey = process.env.EMAIL_SECRET_KEY;
+import * as nodemailer from "nodemailer";
+//const nodemailer = require("nodemailer");
+const transporter = nodemailer.createTransport({
+  host: "mail.lautrade.com",
+  port: 465,
+  secure: true, // true for 465, false for other ports
+  auth: {
+    user: process.env.EMAIL_USERNAME,
+    pass: process.env.EMAIL_PASSWORD,
+  },
+});
 
 //get all users
 export async function getUsers(req: Request, res: Response) {
@@ -38,10 +50,25 @@ export async function registerUser(req: Request, res: Response) {
     let createUser = new User({
       email: req.body.email,
       password: passwordHashed,
-      isVerified: false,
     });
+
     await User.create(createUser);
+
+    // Step 3 - Generate a verification token with the user's ID
+    const verificationToken = createUser.generateVerificationToken();
+    console.log("verificationToken ", verificationToken);
+    //const verificationToken = "test";
     //send validation email
+    const url = `http://localhost:${process.env.PORT}/api/verify/${verificationToken}`;
+    console.log("url ", url);
+    // transporter.sendMail({
+    //   from: '"Lautrade system" <system@lautrade.com>', // sender address
+    //   to: req.body.email,
+    //   subject: "Verify Account testing 2",
+    //   text: "Verify Account testing email 2.", // plain text body
+    //   html: `Click <a href = '${url}'>here</a> to confirm your email 2.`,
+    // });
+
     res.status(200).send(createUser);
   } catch (error) {
     res.status(500).send({ status: "User registration failed", error: error });
@@ -57,7 +84,7 @@ export async function loginUser(req: Request, res: Response) {
         req.body.password,
         user.password
       );
-      if (isPasswordValid) {
+      if (isPasswordValid && user.verified) {
         const token = jwt.sign({ email: user.email }, secret!, {
           expiresIn: "1h",
         });
@@ -79,7 +106,46 @@ export async function getUser(req: Request, res: Response) {
     const getUser = await User.findOne({ _id: req.params.id });
     res.status(200).send(getUser);
   } catch {
-    res.status(404).send({ error: "User doesn't exist!" });
+    res.status(404).send({ error: "User doesn't exist" });
+  }
+}
+
+//get a single user by id
+export async function verifyUser(req: Request, res: Response) {
+  try {
+    const token = req.params.id;
+    // Check we have an id
+    if (!token) {
+      return res.status(422).send({
+        message: "Missing Token",
+      });
+    }
+    // Step 1 -  Verify the token from the URL
+    let payload: any = null;
+    try {
+      payload = jwt.verify(token, emailSecretKey!);
+    } catch (err) {
+      return res.status(500).send(err);
+    }
+    try {
+      // Step 2 - Find user with matching ID
+      const user = await User.findOne({ _id: payload.id }).exec();
+      if (!user) {
+        return res.status(404).send({
+          message: "User does not exist",
+        });
+      }
+      // Step 3 - Update user verification status to true
+      user.verified = true;
+      await user.save();
+      return res.status(200).send({
+        message: "Account Verified",
+      });
+    } catch (err) {
+      return res.status(500).send(err);
+    }
+  } catch {
+    res.status(500).send({ error: "User verification failed" });
   }
 }
 
@@ -94,7 +160,7 @@ export async function editUser(req: Request, res: Response) {
       editUser!.password = req.body.password;
     }
     if (req.body.isVerified) {
-      editUser!.isVerified = req.body.isVerified;
+      editUser!.verified = req.body.verified;
     }
     const savedUser = await editUser!.save();
     res.status(200).send(savedUser);

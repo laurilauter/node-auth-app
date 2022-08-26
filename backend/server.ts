@@ -1,7 +1,7 @@
 import express from "express";
 import mongoose from "mongoose";
 import "dotenv/config";
-import userRouter from "./routes/userRouter";
+import userRouter from "./routes/userRoutes";
 const path = require("path");
 //const userRoutes = require("./routes/userRoutes");
 const port = process.env.PORT;

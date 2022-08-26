@@ -12,6 +12,9 @@ userRouter.get("/user/:id", userController.getUser);
 // //register a new user
 userRouter.post("/register", userController.registerUser);
 
+// //verify by email
+userRouter.get("/verify/:id", userController.verifyUser);
+
 // //user login
 userRouter.post("/login", userController.loginUser);
 
